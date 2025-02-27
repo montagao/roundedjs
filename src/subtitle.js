@@ -44,7 +44,7 @@ function parseSRT(srtPath) {
     try {
         const buffer = fs.readFileSync(srtPath);
         try {
-            content = iconv.decode(buffer, 'utf-8-sig');
+            content = iconv.decode(buffer, 'utf-8');
         } catch (error) {
             // Try Latin-1 if UTF-8 fails
             try {

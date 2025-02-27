@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RoundedJS Subtitle Generator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="studio-container">
+        <!-- App Header -->
+        <header class="studio-header">
+            <h1>RoundedJS Subtitle Generator</h1>
+            <div class="header-actions">
+                <button class="btn btn-primary" id="generate-btn">
+                    <i class="bi bi-play-fill"></i> Generate Subtitles
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Studio Layout -->
+        <div class="studio-layout">
+            <!-- Left Sidebar - Configuration -->
+            <div class="sidebar">
+                <!-- File Upload Panel -->
+                <div class="panel">
+                    <div class="panel-header" data-bs-toggle="collapse" data-bs-target="#filesPanel" aria-expanded="true" aria-controls="filesPanel">
+                        <h5><i class="bi bi-file-earmark"></i> Files</h5>
+                        <i class="bi bi-chevron-up"></i>
+                    </div>
+                    <div id="filesPanel" class="panel-body collapse show">
+                        <div class="upload-container" id="srt-upload">
+                            <div class="upload-area" id="srt-drop-area">
+                                <div class="upload-icon">
+                                    <i class="bi bi-file-earmark-text"></i>
+                                </div>
+                                <p>Click to select SRT file</p>
+                                <input type="file" id="srt-file-input" accept=".srt" class="file-input" />
+                            </div>
+                            <div class="selected-file" id="srt-file-info"></div>
+                        </div>
+                        
+                        <div class="upload-container">
+                            <div class="upload-area" id="video-drop-area">
+                                <div class="upload-icon">
+                                    <i class="bi bi-film"></i>
+                                </div>
+                                <p>Click to select video (optional)</p>
+                                <input type="file" id="video-file-input" accept="video/*" class="file-input" />
+                            </div>
+                            <div class="selected-file" id="video-file-info"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Config Panel -->
+                <div class="panel">
+                    <div class="panel-header" data-bs-toggle="collapse" data-bs-target="#configPanel" aria-expanded="true" aria-controls="configPanel">
+                        <h5><i class="bi bi-gear"></i> Configuration</h5>
+                        <i class="bi bi-chevron-up"></i>
+                    </div>
+                    <div id="configPanel" class="panel-body collapse show">
+                        <form id="config-form">
+                            <div class="config-grid">
+                                <div class="config-item">
+                                    <label for="font" class="form-label">Font</label>
+                                    <input type="text" class="form-control form-control-sm" id="font" name="font" value="Arial">
+                                </div>
+                                <div class="config-item">
+                                    <label for="font-size" class="form-label">Font Size (px)</label>
+                                    <input type="number" class="form-control form-control-sm" id="font-size" name="fontSize" value="48">
+                                </div>
+                                <div class="config-item">
+                                    <label for="text-color" class="form-label">Text Color</label>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">#</span>
+                                        <input type="text" class="form-control" id="text-color" name="textColor" value="FFFFFF">
+                                    </div>
+                                </div>
+                                <div class="config-item">
+                                    <label for="bg-color" class="form-label">Background Color</label>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">#</span>
+                                        <input type="text" class="form-control" id="bg-color" name="bgColor" value="000000">
+                                    </div>
+                                </div>
+                                <div class="config-item">
+                                    <label for="opacity" class="form-label">Opacity <span id="opacity-value">80</span>/255</label>
+                                    <input type="range" class="form-range" id="opacity" name="opacity" min="0" max="255" value="80">
+                                </div>
+                                <div class="config-item">
+                                    <label for="radius" class="form-label">Corner Radius (px)</label>
+                                    <input type="number" class="form-control form-control-sm" id="radius" name="radius" value="10">
+                                </div>
+                                <div class="config-item">
+                                    <label for="padding-x" class="form-label">Padding X (px)</label>
+                                    <input type="number" class="form-control form-control-sm" id="padding-x" name="paddingX" value="20">
+                                </div>
+                                <div class="config-item">
+                                    <label for="padding-y" class="form-label">Padding Y (px)</label>
+                                    <input type="number" class="form-control form-control-sm" id="padding-y" name="paddingY" value="10">
+                                </div>
+                                <div class="config-item">
+                                    <label for="margin-bottom" class="form-label">Bottom Margin (px)</label>
+                                    <input type="number" class="form-control form-control-sm" id="margin-bottom" name="marginBottom" value="50">
+                                </div>
+                                <div class="config-item">
+                                    <label for="width-ratio" class="form-label">Width Ratio</label>
+                                    <input type="number" class="form-control form-control-sm" id="width-ratio" name="widthRatio" value="1.0" step="0.01">
+                                </div>
+                                <div class="config-item options">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="disable-canvas" name="disableCanvas">
+                                        <label class="form-check-label" for="disable-canvas">
+                                            Disable Canvas
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="verbose" name="verbose">
+                                        <label class="form-check-label" for="verbose">
+                                            Verbose Logging
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="main-content">
+                <!-- Preview Area -->
+                <div class="panel">
+                    <div class="panel-header" data-bs-toggle="collapse" data-bs-target="#previewPanel" aria-expanded="true" aria-controls="previewPanel">
+                        <h5><i class="bi bi-film"></i> Video Preview</h5>
+                        <i class="bi bi-chevron-up"></i>
+                    </div>
+                    <div id="previewPanel" class="panel-body collapse show">
+                        <div id="video-preview-container" class="text-center">
+                            <p class="video-placeholder">Generate subtitles to preview the video with ASS subtitles</p>
+                            <div id="video-player-wrapper" style="display: none;">
+                                <video id="video-player" controls width="100%">
+                                    Your browser does not support the video tag.
+                                </video>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Log Output Area -->
+                <div class="panel">
+                    <div class="panel-header" data-bs-toggle="collapse" data-bs-target="#logPanel" aria-expanded="true" aria-controls="logPanel">
+                        <h5><i class="bi bi-terminal"></i> Log Output</h5>
+                        <div>
+                            <button class="btn btn-sm btn-outline-secondary" id="clear-log-btn">Clear</button>
+                            <i class="bi bi-chevron-up ms-2"></i>
+                        </div>
+                    </div>
+                    <div id="logPanel" class="panel-body collapse show">
+                        <div id="log-output" class="log-container">
+                            <div class="log-entry">Ready to generate subtitles. Upload a .srt file to begin.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Download Section -->
+                <div class="panel">
+                    <div class="panel-header" data-bs-toggle="collapse" data-bs-target="#downloadPanel" aria-expanded="true" aria-controls="downloadPanel">
+                        <h5><i class="bi bi-download"></i> Download</h5>
+                        <i class="bi bi-chevron-up"></i>
+                    </div>
+                    <div id="downloadPanel" class="panel-body collapse show">
+                        <div id="download-container">
+                            <p class="text-center">Generate subtitles to download the ASS file</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- FFmpeg Debug Panel -->
+                <div class="panel">
+                    <div class="panel-header" data-bs-toggle="collapse" data-bs-target="#ffmpegDebugPanel" aria-expanded="false" aria-controls="ffmpegDebugPanel">
+                        <h5><i class="bi bi-bug"></i> FFmpeg Debug</h5>
+                        <i class="bi bi-chevron-down"></i>
+                    </div>
+                    <div id="ffmpegDebugPanel" class="panel-body collapse">
+                        <div class="ffmpeg-debug">
+                            <div class="d-flex justify-content-between mb-2">
+                                <h6>Test FFmpeg Command</h6>
+                                <button id="test-ffmpeg-btn" class="btn btn-sm btn-outline-secondary">
+                                    Run Test
+                                </button>
+                            </div>
+                            <div class="form-group mb-2">
+                                <label for="ffmpeg-cmd" class="form-label">Command</label>
+                                <textarea id="ffmpeg-cmd" class="form-control form-control-sm" rows="3">ffmpeg -version</textarea>
+                            </div>
+                            <div class="ffmpeg-output mt-2">
+                                <h6>Output</h6>
+                                <pre id="ffmpeg-output" class="border rounded bg-light p-2 small">No output yet. Click "Run Test" to execute FFmpeg.</pre>
+                            </div>
+                            <div class="mt-2">
+                                <h6>Troubleshooting Tips</h6>
+                                <ul class="small">
+                                    <li>Make sure FFmpeg is installed and available in your PATH</li>
+                                    <li>Check that font files are available to FFmpeg</li>
+                                    <li>Verify that the ASS file is correctly formatted</li>
+                                    <li>Try running the command directly in your terminal to compare</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html> 

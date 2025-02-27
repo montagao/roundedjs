@@ -99,6 +99,7 @@ const FONT_CATEGORIES = {
     'Verdana': { category: 'default', factor: 1.05 },
     'Tahoma': { category: 'default', factor: 1.0 },
     'Calibri': { category: 'default', factor: 0.98 },
+    'Toucher Semibold': { category: 'default', factor: 1.0 },
 
     // Narrower proportional fonts
     'Times New Roman': { category: 'narrow', factor: 0.95 },
@@ -123,7 +124,6 @@ const FONT_CATEGORIES = {
     'DejaVu Sans Mono': { category: 'monospace', factor: 1.0 },
     'Andale Mono': { category: 'monospace', factor: 1.0 },
 
-    // CJK fonts
     'SimSun': { category: 'default', factor: 1.0, script: 'cjk' },
     'Microsoft YaHei': { category: 'default', factor: 1.0, script: 'cjk' },
     'SimHei': { category: 'default', factor: 1.0, script: 'cjk' },
@@ -134,6 +134,19 @@ const FONT_CATEGORIES = {
     'Batang': { category: 'default', factor: 1.0, script: 'cjk' },
     'Gulim': { category: 'default', factor: 1.0, script: 'cjk' },
     'Mingliu': { category: 'default', factor: 1.0, script: 'cjk' },
+    'PingFang SC': { category: 'default', factor: 1.0, script: 'cjk' },
+    'PingFang TC': { category: 'default', factor: 1.0, script: 'cjk' },
+    'PingFang HK': { category: 'default', factor: 1.0, script: 'cjk' },
+    'Hiragino Sans GB': { category: 'default', factor: 1.0, script: 'cjk' },
+    'Heiti SC': { category: 'default', factor: 1.0, script: 'cjk' },
+    'Heiti TC': { category: 'default', factor: 1.0, script: 'cjk' },
+    'STHeiti': { category: 'default', factor: 1.0, script: 'cjk' },
+    'Songti SC': { category: 'default', factor: 1.0, script: 'cjk' },
+    'Songti TC': { category: 'default', factor: 1.0, script: 'cjk' },
+    'Noto Sans CJK SC': { category: 'default', factor: 1.0, script: 'cjk' },
+    'Noto Sans CJK TC': { category: 'default', factor: 1.0, script: 'cjk' },
+    'Noto Sans CJK JP': { category: 'default', factor: 1.0, script: 'cjk' },
+    'Noto Sans CJK KR': { category: 'default', factor: 1.0, script: 'cjk' },
 };
 
 // Common font paths for different operating systems
@@ -180,6 +193,28 @@ function findFontFile(fontName) {
     // Normalize font name for comparison
     const fontNameLower = fontName.toLowerCase();
 
+    // For CJK fonts, prepare alternative names to try
+    const alternativeNames = [fontNameLower];
+
+    // Add common CJK font variations
+    if (fontNameLower.includes('cjk')) {
+        if (fontNameLower.includes('sc')) {
+            alternativeNames.push('cjk');
+            alternativeNames.push('chinese');
+            alternativeNames.push('simplified');
+        } else if (fontNameLower.includes('tc')) {
+            alternativeNames.push('cjk');
+            alternativeNames.push('chinese');
+            alternativeNames.push('traditional');
+        } else if (fontNameLower.includes('jp')) {
+            alternativeNames.push('cjk');
+            alternativeNames.push('japanese');
+        } else if (fontNameLower.includes('kr')) {
+            alternativeNames.push('cjk');
+            alternativeNames.push('korean');
+        }
+    }
+
     // Search for the font file
     for (const fontDir of fontDirs) {
         if (!fs.existsSync(fontDir)) {
@@ -204,13 +239,26 @@ function findFontFile(fontName) {
                     } else if (stat.isFile()) {
                         const ext = path.extname(file).toLowerCase();
                         if (extensions.includes(ext)) {
-                            // Check if font name is in the filename
-                            if (file.toLowerCase().replace(/\s/g, '').replace(/-/g, '').includes(fontNameLower)) {
+                            const filenameLower = file.toLowerCase().replace(/\s/g, '').replace(/-/g, '');
+
+                            // Try exact match first
+                            if (filenameLower.includes(fontNameLower)) {
                                 FONT_PATH_CACHE[fontName] = filePath;
                                 if (DEBUG.logFontPaths) {
                                     console.log(`[FONT DEBUG] Found font '${fontName}' at: ${filePath}`);
                                 }
                                 return filePath;
+                            }
+
+                            // Then try alternative names for CJK fonts
+                            for (const altName of alternativeNames) {
+                                if (altName !== fontNameLower && filenameLower.includes(altName)) {
+                                    FONT_PATH_CACHE[fontName] = filePath;
+                                    if (DEBUG.logFontPaths) {
+                                        console.log(`[FONT DEBUG] Found font '${fontName}' using alternative name '${altName}' at: ${filePath}`);
+                                    }
+                                    return filePath;
+                                }
                             }
                         }
                     }
