@@ -1,0 +1,1 @@
+cmd_Release/ass_measure.node := c++ -bundle -framework CoreFoundation -framework CoreGraphics -L/opt/homebrew/Cellar/libass/0.17.3/lib -lass -undefined dynamic_lookup -Wl,-search_paths_first -mmacosx-version-min=11.0 -arch arm64 -L./Release -stdlib=libc++  -o Release/ass_measure.node Release/obj.target/ass_measure/src/binding.o Release/nothing.a -lass

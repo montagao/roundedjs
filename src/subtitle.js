@@ -6,12 +6,10 @@ const fs = require('fs-extra');
 const path = require('path');
 const _ = require('lodash');
 const iconv = require('iconv-lite');
-const { execSync } = require('child_process');
 const { getVideoDimensions } = require('./video');
 const { calculateTextDimensions } = require('./fonts');
 const { detectScript, isRtlScript } = require('./textUtils');
 const { WIDTH_ESTIMATION, DEBUG } = require('./config');
-const os = require('os');
 
 // SSA/ASS header template
 function createAssHeader(videoWidth, videoHeight, predominantScript, fontName, fontSize, marginBottom, bgColor, textColor) {
@@ -171,105 +169,6 @@ function generateRoundedRectDrawing(halfWidth, halfHeight, borderRadius) {
 }
 
 /**
- * Creates a temporary ASS file for measuring dimensions
- * 
- * @param {Array} subtitles - Array of subtitles 
- * @param {string} fontName - Font name
- * @param {number} fontSize - Font size
- * @param {number} videoWidth - Video width
- * @param {number} videoHeight - Video height
- * @returns {string} - Path to created temporary ASS file
- */
-function createTemporaryAssFile(subtitles, fontName, fontSize, videoWidth, videoHeight) {
-    const tempFilePath = path.join(os.tmpdir(), `temp-${Date.now()}.ass`);
-    
-    // Create a basic ASS file with just the subtitles in the Default style
-    let assContent = `[Script Info]
-Title: Temporary ASS file for measurement
-ScriptType: v4.00+
-PlayResX: ${videoWidth}
-PlayResY: ${videoHeight}
-WrapStyle: 0
-ScaledBorderAndShadow: yes
-
-[V4+ Styles]
-Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,${fontName},${fontSize},&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,5,10,10,10,1
-
-[Events]
-Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
-`;
-
-    // Add each subtitle as a dialogue line
-    subtitles.forEach((sub, index) => {
-        const startTime = formatAssTime(sub.start);
-        const endTime = formatAssTime(sub.end);
-        assContent += `Dialogue: 0,${startTime},${endTime},Default,,0,0,0,,${sub.text}\n`;
-    });
-
-    // Write the file
-    fs.writeFileSync(tempFilePath, assContent, 'utf8');
-    
-    return tempFilePath;
-}
-
-/**
- * Measure subtitle dimensions using the ass-measure library
- * 
- * @param {string} assFilePath - Path to ASS file
- * @param {number} videoWidth - Video width
- * @param {number} videoHeight - Video height
- * @returns {Array} - Array of subtitle dimensions
- */
-function measureSubtitleDimensions(assFilePath, videoWidth, videoHeight) {
-    try {
-        // Execute the command using 'mass' from PATH
-        const result = execSync(
-            `mass "${assFilePath}" ${videoWidth} ${videoHeight}`,
-            { encoding: 'utf8' }
-        );
-        
-        // Parse the output to extract dimensions
-        const dimensions = [];
-        const lines = result.split('\n');
-        let currentLine = null;
-        
-        for (const line of lines) {
-            if (line.startsWith('Line ') && line.includes(':')) {
-                currentLine = {
-                    index: parseInt(line.match(/Line (\d+):/)[1]) - 1,
-                    text: '',
-                    width: 0,
-                    height: 0
-                };
-            } else if (line.startsWith('  Text:') && currentLine) {
-                // Extract text content
-                const match = line.match(/Text: "(.*)"/);
-                if (match) {
-                    currentLine.text = match[1];
-                }
-            } else if (line.startsWith('  Dimensions:') && currentLine) {
-                // Extract dimensions
-                const match = line.match(/Dimensions: (\d+) x (\d+) pixels/);
-                if (match) {
-                    currentLine.width = parseInt(match[1]);
-                    currentLine.height = parseInt(match[2]);
-                    dimensions.push(currentLine);
-                    currentLine = null;
-                }
-            }
-        }
-        
-        return dimensions;
-    } catch (error) {
-        console.error(`Error measuring subtitle dimensions: ${error.message}`);
-        // Fallback to estimating dimensions if the measurement fails
-        console.warn('Falling back to text dimension estimation.');
-        return null;
-    }
-}
-
-/**
  * Generate an ASS subtitle file from SRT content with rounded backgrounds.
  * 
  * @param {string} srtPath - Path to the SRT file
@@ -322,8 +221,7 @@ async function generateRoundedSubtitles(srtPath, videoPath, outputPath, options 
             fontName: options.font || 'Arial',
             widthCorrection: options.widthCorrection || 0.95,
             tightFit: options.tightFit !== undefined ? options.tightFit : true,
-            disableMinWidth: options.disableMinWidth !== undefined ? options.disableMinWidth : true,
-            useAssMeasure: options.useAssMeasure !== undefined ? options.useAssMeasure : true
+            disableMinWidth: options.disableMinWidth !== undefined ? options.disableMinWidth : true
         };
 
         // Calculate font size based on video height (matching Python implementation)
@@ -369,18 +267,6 @@ async function generateRoundedSubtitles(srtPath, videoPath, outputPath, options 
             config.textColor
         );
 
-        // Use ass-measure to get accurate subtitle dimensions
-        let subtitleDimensions = null;
-        if (config.useAssMeasure) {
-            console.log('Using ass-measure for accurate subtitle dimensions');
-            // Create a temporary ASS file for measurement
-            const tempAssFile = createTemporaryAssFile(subtitles, fontName, fontSize, videoWidth, videoHeight);
-            // Measure subtitle dimensions
-            subtitleDimensions = measureSubtitleDimensions(tempAssFile, videoWidth, videoHeight);
-            // Clean up temporary file
-            fs.removeSync(tempAssFile);
-        }
-
         // Generate event lines for each subtitle
         const events = [];
 
@@ -395,31 +281,15 @@ async function generateRoundedSubtitles(srtPath, videoPath, outputPath, options 
             // Detect script for this specific subtitle
             const textScript = detectScript(sub.text);
 
-            // Calculate box dimensions using ass-measure results if available
-            let textWidth, textHeight;
-            
-            if (subtitleDimensions && idx < subtitleDimensions.length) {
-                // Use the accurate dimensions from ass-measure
-                textWidth = subtitleDimensions[idx].width;
-                textHeight = subtitleDimensions[idx].height;
-                console.log(`Using measured dimensions for line ${idx+1}: ${textWidth}x${textHeight}`);
-            } else {
-                // Fall back to estimation method
-                const calculatedDimensions = calculateTextDimensions(
-                    sub.text,
-                    fontSize,
-                    fontName,
-                    config.widthCorrection,
-                    config.lineSpacing,
-                    config.tightFit
-                );
-                textWidth = calculatedDimensions.width;
-                textHeight = calculatedDimensions.height;
-                
-                if (!subtitleDimensions && idx === 0) {
-                    console.log('Using estimated dimensions (ass-measure not available)');
-                }
-            }
+            // Calculate box dimensions
+            const { width: textWidth, height: textHeight } = calculateTextDimensions(
+                sub.text,
+                fontSize,
+                fontName,
+                config.widthCorrection,
+                config.lineSpacing,
+                config.tightFit
+            );
 
             // Add padding to dimensions with special handling for zero padding case
             let boxWidth;
