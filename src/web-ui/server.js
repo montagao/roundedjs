@@ -455,7 +455,7 @@ app.post('/generate', upload.fields([
                     }
                     
                     // Use FFmpeg to create a preview video with the subtitles
-                    const ffmpegCmd = `ffmpeg -y -i "${videoFile.path}" -t 10 -vf "ass=${outputFile}" -c:v libx264 -preset fast -crf 22 -c:a aac -b:a 128k "${previewVideoFile}"`;
+                    const ffmpegCmd = `ffmpeg -y -i "${videoFile.path}" -t 60 -vf "ass=${outputFile}" -c:v libx264 -preset fast -crf 22 -c:a aac -b:a 128k "${previewVideoFile}"`;
                     logs.push({ type: 'info', message: `Executing FFmpeg command: ${ffmpegCmd}` });
                     
                     // Log the user's environment variables that might be relevant
@@ -490,7 +490,7 @@ app.post('/generate', upload.fields([
                                 const ffmpeg = spawn('ffmpeg', [
                                     '-y',
                                     '-i', videoFile.path,
-                                    '-t', '10',
+                                    '-t', '60',
                                     '-vf', `ass=${assPath}`,
                                     '-c:v', 'libx264',
                                     '-preset', 'fast',
