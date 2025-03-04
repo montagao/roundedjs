@@ -1,0 +1,23 @@
+# Development files
+.git
+.gitignore
+examples/
+Makefile
+*.o
+*.a
+
+# Build artifacts
+build/
+bin/
+node_modules/
+
+# Test files
+test.js
+
+# Documentation
+README.md
+LICENSE
+
+# Source code not needed for distribution
+src/*.c
+binding.gyp
