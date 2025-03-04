@@ -14,6 +14,9 @@
         <header class="studio-header">
             <h1>RoundedJS Subtitle Generator</h1>
             <div class="header-actions">
+                <a href="font-debug.html" class="btn btn-outline-secondary me-2">
+                    <i class="bi bi-type"></i> Font Debug
+                </a>
                 <button class="btn btn-primary" id="generate-btn">
                     <i class="bi bi-play-fill"></i> Generate Subtitles
                 </button>
@@ -142,7 +145,7 @@
                         <div id="video-preview-container" class="text-center">
                             <p class="video-placeholder">Generate subtitles to preview the video with ASS subtitles</p>
                             <div id="video-player-wrapper" style="display: none;">
-                                <video id="video-player" controls width="100%">
+                                <video id="video-player" width="100%" controls>
                                     Your browser does not support the video tag.
                                 </video>
                             </div>
@@ -153,7 +156,7 @@
                 <!-- Log Output Area -->
                 <div class="panel">
                     <div class="panel-header" data-bs-toggle="collapse" data-bs-target="#logPanel" aria-expanded="true" aria-controls="logPanel">
-                        <h5><i class="bi bi-terminal"></i> Log Output</h5>
+                        <h5><i class="bi bi-terminal"></i> Debug Output</h5>
                         <div>
                             <button class="btn btn-sm btn-outline-secondary" id="clear-log-btn">Clear</button>
                             <i class="bi bi-chevron-up ms-2"></i>
@@ -163,53 +166,9 @@
                         <div id="log-output" class="log-container">
                             <div class="log-entry">Ready to generate subtitles. Upload a .srt file to begin.</div>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Download Section -->
-                <div class="panel">
-                    <div class="panel-header" data-bs-toggle="collapse" data-bs-target="#downloadPanel" aria-expanded="true" aria-controls="downloadPanel">
-                        <h5><i class="bi bi-download"></i> Download</h5>
-                        <i class="bi bi-chevron-up"></i>
-                    </div>
-                    <div id="downloadPanel" class="panel-body collapse show">
-                        <div id="download-container">
-                            <p class="text-center">Generate subtitles to download the ASS file</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- FFmpeg Debug Panel -->
-                <div class="panel">
-                    <div class="panel-header" data-bs-toggle="collapse" data-bs-target="#ffmpegDebugPanel" aria-expanded="false" aria-controls="ffmpegDebugPanel">
-                        <h5><i class="bi bi-bug"></i> FFmpeg Debug</h5>
-                        <i class="bi bi-chevron-down"></i>
-                    </div>
-                    <div id="ffmpegDebugPanel" class="panel-body collapse">
-                        <div class="ffmpeg-debug">
-                            <div class="d-flex justify-content-between mb-2">
-                                <h6>Test FFmpeg Command</h6>
-                                <button id="test-ffmpeg-btn" class="btn btn-sm btn-outline-secondary">
-                                    Run Test
-                                </button>
-                            </div>
-                            <div class="form-group mb-2">
-                                <label for="ffmpeg-cmd" class="form-label">Command</label>
-                                <textarea id="ffmpeg-cmd" class="form-control form-control-sm" rows="3">ffmpeg -version</textarea>
-                            </div>
-                            <div class="ffmpeg-output mt-2">
-                                <h6>Output</h6>
-                                <pre id="ffmpeg-output" class="border rounded bg-light p-2 small">No output yet. Click "Run Test" to execute FFmpeg.</pre>
-                            </div>
-                            <div class="mt-2">
-                                <h6>Troubleshooting Tips</h6>
-                                <ul class="small">
-                                    <li>Make sure FFmpeg is installed and available in your PATH</li>
-                                    <li>Check that font files are available to FFmpeg</li>
-                                    <li>Verify that the ASS file is correctly formatted</li>
-                                    <li>Try running the command directly in your terminal to compare</li>
-                                </ul>
-                            </div>
+                        <!-- Download Button integrated into log panel -->
+                        <div id="download-container" class="text-end mt-2">
+                            <p class="download-message d-inline-block me-2">Generate subtitles to download the ASS file</p>
                         </div>
                     </div>
                 </div>

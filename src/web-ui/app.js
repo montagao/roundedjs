@@ -17,11 +17,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const videoPlayerWrapper = document.getElementById('video-player-wrapper');
     const videoPlayer = document.getElementById('video-player');
     
-    // FFmpeg debug elements
-    const testFfmpegBtn = document.getElementById('test-ffmpeg-btn');
-    const ffmpegCmdInput = document.getElementById('ffmpeg-cmd');
-    const ffmpegOutput = document.getElementById('ffmpeg-output');
-    
     // Track uploaded files
     let srtFile = null;
     let videoFile = null;
@@ -58,71 +53,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     });
-    
-    // FFmpeg test functionality
-    if (testFfmpegBtn) {
-        testFfmpegBtn.addEventListener('click', async function() {
-            try {
-                testFfmpegBtn.disabled = true;
-                testFfmpegBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Running...';
-                ffmpegOutput.textContent = 'Executing command...';
-                
-                const command = ffmpegCmdInput.value.trim();
-                
-                const response = await fetch('/test-ffmpeg', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ command })
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    let output = '';
-                    
-                    output += `Environment Info:\n`;
-                    output += `  Working Directory: ${result.environment.workingDirectory}\n`;
-                    output += `  PATH: ${result.environment.path}\n`;
-                    output += `  Platform: ${result.environment.platform}\n`;
-                    output += `  Node Version: ${result.environment.nodeVersion}\n\n`;
-                    
-                    if (result.stdout) {
-                        output += `STDOUT:\n${result.stdout}\n\n`;
-                    }
-                    
-                    if (result.stderr) {
-                        output += `STDERR:\n${result.stderr}`;
-                    }
-                    
-                    ffmpegOutput.textContent = output;
-                    
-                    // Also log to the main log
-                    logMessage('FFmpeg test command executed successfully', 'success');
-                } else {
-                    ffmpegOutput.textContent = `Error: ${result.error}\n\n`;
-                    
-                    if (result.stderr) {
-                        ffmpegOutput.textContent += `STDERR:\n${result.stderr}\n\n`;
-                    }
-                    
-                    if (result.stdout) {
-                        ffmpegOutput.textContent += `STDOUT:\n${result.stdout}`;
-                    }
-                    
-                    // Also log to the main log
-                    logMessage(`FFmpeg test command failed: ${result.error}`, 'error');
-                }
-            } catch (error) {
-                ffmpegOutput.textContent = `Client Error: ${error.message}`;
-                logMessage(`FFmpeg test error: ${error.message}`, 'error');
-            } finally {
-                testFfmpegBtn.disabled = false;
-                testFfmpegBtn.textContent = 'Run Test';
-            }
-        });
-    }
     
     // Setup file input handlers (drag and drop disabled as requested)
     function setupFileInput(dropArea, fileInput, fileInfoElement, fileType) {
@@ -407,8 +337,19 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Create download button
     function createDownloadButton(content, filename) {
-        // Clear previous downloads
+        // Clear previous downloads except the message
+        const downloadMessage = downloadContainer.querySelector('.download-message');
         downloadContainer.innerHTML = '';
+        
+        if (downloadMessage) {
+            downloadContainer.appendChild(downloadMessage);
+        } else {
+            // Create a new message if it doesn't exist
+            const msg = document.createElement('p');
+            msg.className = 'download-message d-inline-block me-2';
+            msg.textContent = 'Download your subtitle file:';
+            downloadContainer.appendChild(msg);
+        }
         
         // Create a Blob with the content
         const blob = new Blob([content], { type: 'text/plain' });
@@ -418,8 +359,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const downloadBtn = document.createElement('a');
         downloadBtn.href = url;
         downloadBtn.download = filename;
-        downloadBtn.className = 'btn btn-success d-block mx-auto';
-        downloadBtn.innerHTML = '<i class="bi bi-download me-2"></i> Download ASS Subtitle File';
+        downloadBtn.className = 'btn btn-sm btn-success';
+        downloadBtn.innerHTML = '<i class="bi bi-download me-1"></i> Download ASS';
         
         downloadContainer.appendChild(downloadBtn);
         
@@ -430,7 +371,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Reset video preview
     function resetVideoPreview() {
         videoPlayerWrapper.style.display = 'none';
-        videoPlayer.src = '';
+        
+        // Properly reset video element
+        if (videoPlayer) {
+            videoPlayer.pause();
+            videoPlayer.removeAttribute('src');
+            videoPlayer.load();
+        }
         
         // Show placeholder message
         const placeholder = videoPreviewContainer.querySelector('.video-placeholder');
@@ -459,21 +406,52 @@ document.addEventListener('DOMContentLoaded', function() {
             placeholder.style.display = 'none';
         }
         
-        // Set video source and show player
-        videoPlayer.src = videoUrl;
-        videoPlayerWrapper.style.display = 'block';
-        
-        // Add event listeners for debugging
-        videoPlayer.addEventListener('error', function(e) {
-            logMessage(`Video error: ${videoPlayer.error?.message || 'Unknown error'}`, 'error');
-        });
-        
-        videoPlayer.addEventListener('loadeddata', function() {
-            logMessage('Video loaded successfully', 'success');
-        });
+        // Reset any existing video player first
+        if (videoPlayer) {
+            videoPlayer.pause();
+            videoPlayer.removeAttribute('src');
+            videoPlayer.load();
+            
+            // Always show controls for better usability
+            videoPlayer.controls = true;
+            
+            // Set video source with cache-busting
+            const cacheBustUrl = videoUrl + (videoUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
+            videoPlayer.src = cacheBustUrl;
+            
+            // Force reload
+            videoPlayer.load();
+            
+            // Show player wrapper
+            videoPlayerWrapper.style.display = 'block';
+            
+            // Add event listeners for debugging
+            videoPlayer.addEventListener('error', function(e) {
+                const errorMessage = videoPlayer.error?.message || 'Unknown error';
+                logMessage(`Video error: ${errorMessage}`, 'error');
+                logMessage(`Video source was: ${videoPlayer.src}`, 'error');
+                
+                // Try to reload if there's a network error
+                if (videoPlayer.error?.code === MediaError.MEDIA_ERR_NETWORK) {
+                    logMessage('Network error detected, attempting to reload video...', 'warning');
+                    setTimeout(() => {
+                        videoPlayer.load();
+                    }, 1000);
+                }
+            });
+            
+            videoPlayer.addEventListener('loadeddata', function() {
+                logMessage('Video loaded successfully', 'success');
+            });
+        }
         
         // Scroll to video section
-        videoPreviewContainer.scrollIntoView({ behavior: 'smooth' });
+        videoPreviewContainer.scrollIntoView();
+    }
+    
+    // Just make the setupSimpleVideoControls function a no-op since we're using native controls
+    function setupSimpleVideoControls() {
+        // No custom control behavior needed when using native controls
     }
     
     // Process subtitles
@@ -510,6 +488,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Log preview URL information for debugging
         if (result.previewUrl) {
             logMessage(`Preview URL received: ${result.previewUrl}`, 'info');
+            logMessage('Preview videos are automatically cleaned up after 15 minutes', 'info');
         } else {
             logMessage('No preview URL was received from the server', 'warning');
         }
@@ -711,7 +690,8 @@ document.addEventListener('DOMContentLoaded', function() {
             options.font,
             fontSize,
             options.marginBottom,
-            options.bgColor
+            options.bgColor,
+            options.textColor
         );
         
         // Generate event lines for each subtitle
@@ -753,7 +733,8 @@ document.addEventListener('DOMContentLoaded', function() {
             bg += "{\\p0}";
             
             // Text on layer 1
-            const text = `1,${startTime},${endTime},Default,,0,0,0,,{\\an5\\pos(${videoWidth / 2},${yPos})\\bord0\\shad0}${sub.text}`;
+            const textColor = options.textColor || 'FFFFFF';
+            const text = `1,${startTime},${endTime},Default,,0,0,0,,{\\an5\\pos(${videoWidth / 2},${yPos})\\bord0\\shad0\\1c&H${textColor}}${sub.text}`;
             
             events.push("Dialogue: " + bg);
             events.push("Dialogue: " + text);
@@ -766,7 +747,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Create ASS header
-    function createAssHeader(videoWidth, videoHeight, predominantScript, fontName, fontSize, marginBottom, bgColor) {
+    function createAssHeader(videoWidth, videoHeight, predominantScript, fontName, fontSize, marginBottom, bgColor, textColor = 'FFFFFF') {
         return `[Script Info]
 Title: ASS subtitles with rounded background boxes
 ScriptType: v4.00+
@@ -778,7 +759,7 @@ Language: ${predominantScript}
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,${fontName},${fontSize},&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,5,10,10,${marginBottom},1
+Style: Default,${fontName},${fontSize},&H00${textColor},&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,5,10,10,${marginBottom},1
 Style: Box-BG,${fontName},${fontSize / 2},&H00${bgColor},&H000000FF,&H00${bgColor},&H00000000,0,0,0,0,100,100,0,0,1,0,0,7,0,0,0,1
 
 [Events]
