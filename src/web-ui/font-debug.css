@@ -1,0 +1,128 @@
+/* Font Debug Panel Styles */
+
+.debug-panel {
+    background-color: var(--panel-bg);
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.canvas-container {
+    background-color: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin: 15px 0;
+    padding: 10px;
+    text-align: center;
+    position: relative;
+    min-height: 350px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#debug-canvas {
+    background-color: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    max-width: 100%;
+    display: block;
+}
+
+.measurement-box {
+    border: 1px dashed #ff0000;
+    position: absolute;
+    pointer-events: none;
+    z-index: 10;
+    background-color: rgba(255, 0, 0, 0.05);
+}
+
+.measurement-label {
+    background-color: rgba(255, 0, 0, 0.1);
+    color: #ff0000;
+    font-size: 12px;
+    padding: 2px 4px;
+    border-radius: 2px;
+    position: absolute;
+    z-index: 20;
+    font-weight: bold;
+}
+
+.text-input-area {
+    min-height: 100px;
+}
+
+.metrics-display {
+    font-family: monospace;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    padding: 10px;
+    margin-top: 15px;
+}
+
+.metrics-display pre {
+    margin: 0;
+    white-space: pre-wrap;
+}
+
+.font-preview {
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    background-color: #fff;
+}
+
+.tab-content {
+    padding: 15px;
+}
+
+.nav-tabs {
+    background-color: var(--panel-header-bg);
+    padding-top: 10px;
+}
+
+.nav-tabs .nav-link {
+    color: var(--text-color);
+}
+
+.nav-tabs .nav-link.active {
+    background-color: var(--panel-bg);
+    color: var(--text-color);
+    border-bottom-color: var(--panel-bg);
+}
+
+.home-link {
+    margin: 15px;
+}
+
+/* Server image container styles */
+.server-image-container {
+    background-color: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin: 15px 0;
+    padding: 10px;
+    text-align: center;
+    position: relative;
+    min-height: 350px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#serverRenderingResult {
+    background-color: white;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#serverRenderingResult img {
+    max-width: 100%;
+    max-height: 300px;
+    background-color: white;
+    display: block;
+    margin: 0 auto;
+} 
