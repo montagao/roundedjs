@@ -1,62 +1,51 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -std=c11 -I./include
-# Use pkg-config to get the correct flags for libass
-LIBASS_CFLAGS = $(shell pkg-config --cflags libass)
-LIBASS_LDFLAGS = $(shell pkg-config --libs libass)
+CFLAGS = -Wall -Wextra -O2 -fPIC $(shell pkg-config --cflags libass)
+LDFLAGS = $(shell pkg-config --libs libass)
 
-# Add libass flags to our flags
-CFLAGS += $(LIBASS_CFLAGS)
-LDFLAGS = $(LIBASS_LDFLAGS)
-
-# Directories
 SRC_DIR = src
 INCLUDE_DIR = include
 EXAMPLES_DIR = examples
 BIN_DIR = bin
 LIB_DIR = lib
 
-# Files
-SRC_FILES = $(wildcard $(SRC_DIR)/*.c)
-OBJ_FILES = $(patsubst $(SRC_DIR)/%.c,$(BIN_DIR)/%.o,$(SRC_FILES))
+LIB_SRC = $(SRC_DIR)/ass_measure.c
+LIB_OBJ = $(BIN_DIR)/ass_measure.o
 LIB_NAME = libass_measure.a
+LIB_TARGET = $(LIB_DIR)/$(LIB_NAME)
+
 EXAMPLE_NAME = measure_example
+EXAMPLE_SRC = $(EXAMPLES_DIR)/measure_example.c
+EXAMPLE_BIN = $(BIN_DIR)/$(EXAMPLE_NAME)
 
-# Targets
-.PHONY: all clean dirs examples
+.PHONY: all clean dirs lib example install uninstall
 
-all: dirs $(LIB_DIR)/$(LIB_NAME) examples
+all: dirs lib example
 
-# Create necessary directories
 dirs:
-	@mkdir -p $(BIN_DIR) $(LIB_DIR)
+	mkdir -p $(BIN_DIR) $(LIB_DIR)
 
-# Compile library object files
-$(BIN_DIR)/%.o: $(SRC_DIR)/%.c
-	$(CC) $(CFLAGS) -c $< -o $@
+# Explicit rule for building the static library (this is what you missed!)
+$(LIB_TARGET): $(LIB_OBJ)
+	ar rcs $(LIB_TARGET) $(LIB_OBJ)
 
-# Create static library
-$(LIB_DIR)/$(LIB_NAME): $(OBJ_FILES)
-	ar rcs $@ $^
+$(LIB_OBJ): $(LIB_SRC) $(INCLUDE_DIR)/ass_measure.h
+	$(CC) $(CFLAGS) -I$(INCLUDE_DIR) -c $(LIB_SRC) -o $(LIB_OBJ)
 
-# Build examples
-examples: $(LIB_DIR)/$(LIB_NAME)
-	@mkdir -p $(BIN_DIR)/examples
-	$(CC) $(CFLAGS) $(EXAMPLES_DIR)/$(EXAMPLE_NAME).c -o $(BIN_DIR)/$(EXAMPLE_NAME) -L$(LIB_DIR) -lass_measure $(LDFLAGS)
+lib: $(LIB_TARGET)
 
-# Clean up
+example: $(EXAMPLE_BIN)
+
+$(EXAMPLE_BIN): $(EXAMPLE_SRC) $(LIB_TARGET)
+	$(CC) $(CFLAGS) -I$(INCLUDE_DIR) $(EXAMPLE_SRC) $(LIB_TARGET) $(LDFLAGS) -o $(EXAMPLE_BIN)
+
 clean:
 	rm -rf $(BIN_DIR) $(LIB_DIR)
 
-# Install the library and headers (requires root privileges)
-install: all
-	install -d $(DESTDIR)/usr/local/include/ass_measure
-	install -d $(DESTDIR)/usr/local/lib
-	install -m 644 $(INCLUDE_DIR)/*.h $(DESTDIR)/usr/local/include/ass_measure
-	install -m 644 $(LIB_DIR)/$(LIB_NAME) $(DESTDIR)/usr/local/lib
-	@echo "Library installed to /usr/local"
+install: lib
+	install -m 644 $(INCLUDE_DIR)/ass_measure.h /usr/local/include/
+	install -m 644 $(LIB_TARGET) /usr/local/lib/
 
-# Uninstall the library and headers
 uninstall:
-	rm -rf $(DESTDIR)/usr/local/include/ass_measure
-	rm -f $(DESTDIR)/usr/local/lib/$(LIB_NAME)
-	@echo "Library uninstalled from /usr/local" 
+	rm -f /usr/local/include/ass_measure.h
+	rm -f /usr/local/lib/$(LIB_NAME)
+
