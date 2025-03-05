@@ -1,0 +1,1 @@
+cmd_Release/assaddon.node := c++ -bundle -undefined dynamic_lookup -Wl,-search_paths_first -mmacosx-version-min=10.15 -arch arm64 -L./Release -stdlib=libc++  -o Release/assaddon.node Release/obj.target/assaddon/addon.o /Users/montabogota/projects/roundedjs/ass-measure/ass-addon/lib/libass_measure.a -L/opt/homebrew/Cellar/libass/0.17.3/lib -lass

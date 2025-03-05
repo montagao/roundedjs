@@ -1,0 +1,27 @@
+{
+  "name": "ass-addon",
+  "version": "1.0.0",
+  "description": "Node.js bindings for ass-measure library",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "build": "node-gyp rebuild",
+    "clean": "node-gyp clean",
+    "test": "node test.js"
+  },
+  "keywords": [
+    "subtitles",
+    "ass",
+    "dimensions",
+    "native",
+    "addon"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "node-addon-api": "^7.0.0",
+    "node-gyp": "^10.0.1"
+  }
+}

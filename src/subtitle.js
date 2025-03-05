@@ -12,6 +12,7 @@ const { calculateTextDimensions } = require('./fonts');
 const { detectScript, isRtlScript } = require('./textUtils');
 const { WIDTH_ESTIMATION, DEBUG } = require('./config');
 const os = require('os');
+const assMeasureAddon = require('../ass-measure/ass-addon');
 
 // SSA/ASS header template
 function createAssHeader(videoWidth, videoHeight, predominantScript, fontName, fontSize, marginBottom, bgColor, textColor) {
@@ -228,44 +229,16 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
  */
 function measureSubtitleDimensions(assFilePath, videoWidth, videoHeight) {
     try {
-        // Execute the command using 'mass' from PATH
-        const result = execSync(
-            `mass "${assFilePath}" ${videoWidth} ${videoHeight}`,
-            { encoding: 'utf8' }
-        );
+        // Use the Node.js addon instead of executing a command
+        const result = assMeasureAddon.measureSubtitles(assFilePath, videoWidth, videoHeight);
         
-        // Parse the output to extract dimensions
-        const dimensions = [];
-        const lines = result.split('\n');
-        let currentLine = null;
-        
-        for (const line of lines) {
-            if (line.startsWith('Line ') && line.includes(':')) {
-                currentLine = {
-                    index: parseInt(line.match(/Line (\d+):/)[1]) - 1,
-                    text: '',
-                    width: 0,
-                    height: 0
-                };
-            } else if (line.startsWith('  Text:') && currentLine) {
-                // Extract text content
-                const match = line.match(/Text: "(.*)"/);
-                if (match) {
-                    currentLine.text = match[1];
-                }
-            } else if (line.startsWith('  Dimensions:') && currentLine) {
-                // Extract dimensions
-                const match = line.match(/Dimensions: (\d+) x (\d+) pixels/);
-                if (match) {
-                    currentLine.width = parseInt(match[1]);
-                    currentLine.height = parseInt(match[2]);
-                    dimensions.push(currentLine);
-                    currentLine = null;
-                }
-            }
-        }
-        
-        return dimensions;
+        // Convert the result to match the expected format of the function
+        return result.map((line, index) => ({
+            index,
+            text: line.text,
+            width: line.width,
+            height: line.height
+        }));
     } catch (error) {
         console.error(`Error measuring subtitle dimensions: ${error.message}`);
         // Fallback to estimating dimensions if the measurement fails
@@ -500,5 +473,6 @@ async function generateRoundedSubtitles(srtPath, videoPath, outputPath, options 
 
 module.exports = {
     parseSRT,
-    generateRoundedSubtitles
+    generateRoundedSubtitles,
+    measureSubtitleDimensions
 };
