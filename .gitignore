@@ -2,4 +2,4 @@
 *.mp4
 *.ass
 node_modules/
-ass-measure/ass-addon/build/
+ass-measure/ass-addon/build/*
